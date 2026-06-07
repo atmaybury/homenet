@@ -1,10 +1,5 @@
 # homenet
 
-## packages
- 
-  
- 
- 
 Docker Compose setup for a self-hosted media server with VPN-protected torrenting.
 
 ## Services
