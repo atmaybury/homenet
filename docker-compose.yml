@@ -38,7 +38,9 @@ services:
       - WEBUI_PORT=${WEBUI_PORT}
     volumes:
       - ./qbittorrent:/config
-      - /mnt/8TBHDD/Downloads:/downloads
+      - ${DOWNLOADS_PATH}:/downloads
+      - ${TV_PATH}:/tv
+      - ${MOVIES_PATH}:/movies
     restart: unless-stopped
 
   jellyfin:
@@ -54,7 +56,7 @@ services:
       - ./jellyfin/config:/config
       - ./jellyfin/cache:/cache
       - ./jellyfin/transcode:/transcode
-      - /mnt/8TBHDD/Movies/Misc:/media/movies
+      - ${MOVIES_PATH}:/media/movies
     restart: unless-stopped
 
   sonarr:
@@ -66,8 +68,8 @@ services:
       - TZ=${TZ}
     volumes:
       - ./sonarr/:/config
-      - /mnt/8TBHDD/TV:/tv
-      - /mnt/8TBHDD/Downloads:/downloads
+      - ${TV_PATH}:/tv
+      - ${DOWNLOADS_PATH}:/downloads
     networks:
       - media
     ports:
@@ -83,13 +85,14 @@ services:
       - TZ=${TZ}
     volumes:
       - ./radarr/:/config
-      - /mnt/8TBHDD/Movies:/movies
-      - /mnt/8TBHDD/Downloads:/downloads
+      - ${MOVIES_PATH}:/movies
+      - ${DOWNLOADS_PATH}:/downloads
     networks:
       - media
     ports:
       - 7878:7878
     restart: unless-stopped
+
 
   homarr:
     container_name: homarr
