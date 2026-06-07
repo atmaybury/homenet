@@ -32,12 +32,11 @@ See `.env.example` for all required variables. Key ones:
 
 Expects media on a single drive (required for hardlinking):
 
-- `/mnt/8TBHDD/Movies`
-- `/mnt/8TBHDD/TV`
-- `/mnt/8TBHDD/Downloads`
+- `/home/Movies`
+- `/home/TV`
+- `/home/Downloads`
 
 ## Notes
 
 - qBittorrent and natmap share gluetun's network stack — all torrent traffic goes through the VPN
 - Port forwarding is handled natively by gluetun and pushed to qBittorrent automatically
-- Radarr/Sonarr hardlink completed downloads to media folders so seeding continues uninterrupted
