@@ -1,0 +1,119 @@
+services:
+  gluetun:
+    container_name: gluetun
+    image: ghcr.io/qdm12/gluetun:latest
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      - VPN_SERVICE_PROVIDER=${VPN_SERVICE_PROVIDER}
+      - VPN_TYPE=${VPN_TYPE}
+      - WIREGUARD_PRIVATE_KEY=${WIREGUARD_PRIVATE_KEY}
+      - PORT_FORWARD_ONLY=${PORT_FORWARD_ONLY}
+      - VPN_PORT_FORWARDING=on
+        # update forwarded seeing port and set in qbittorrent
+      - VPN_PORT_FORWARDING_UP_COMMAND=/bin/sh -c 'wget -O- -nv --retry-connrefused --post-data "json={\"listen_port\":{{PORT}},\"current_network_interface\":\"{{VPN_INTERFACE}}\",\"random_port\":false,\"upnp\":false}" http://127.0.0.1:9091/api/v2/app/setPreferences' 
+      - VPN_PORT_FORWARDING_DOWN_COMMAND=/bin/sh -c 'wget -O- -nv --retry-connrefused --post-data "json={\"listen_port\":0,\"current_network_interface\":\"lo\"}" http://127.0.0.1:9091/api/v2/app/setPreferences'
+      # Server list updater. See https://github.com/qdm12/gluetun/wiki/Updating-Servers#periodic-update
+      - UPDATER_PERIOD=${UPDATER_PERIOD}
+      - UPDATER_VPN_SERVICE_PROVIDERS=${UPDATER_VPN_SERVICE_PROVIDERS}
+    networks:
+      - media
+    ports:
+      - 9091:9091/tcp # qBittorrent
+    restart: unless-stopped
+
+  qbittorrent:
+    container_name: qbittorrent
+    image: lscr.io/linuxserver/qbittorrent:latest
+    network_mode: "service:gluetun"
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+      - WEBUI_PORT=${WEBUI_PORT}
+    volumes:
+      - ./qbittorrent:/config
+      - /mnt/8TBHDD/Downloads:/downloads
+    restart: unless-stopped
+
+  jellyfin:
+    container_name: jellyfin
+    image: jellyfin/jellyfin
+    # user: ${PUID}:${PGID}
+    networks:
+      - media
+    ports:
+      - 8096:8096/tcp
+      - 7359:7359/udp
+    volumes:
+      - ./jellyfin/config:/config
+      - ./jellyfin/cache:/cache
+      - ./jellyfin/transcode:/transcode
+      - /mnt/8TBHDD/Movies/Misc:/media/movies
+    restart: unless-stopped
+
+  sonarr:
+    container_name: sonarr
+    image: lscr.io/linuxserver/sonarr:latest
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ./sonarr/:/config
+      - /mnt/8TBHDD/TV:/tv
+      - /mnt/8TBHDD/Downloads:/downloads
+    networks:
+      - media
+    ports:
+      - 8989:8989
+    restart: unless-stopped
+
+  radarr:
+    container_name: radarr
+    image: lscr.io/linuxserver/radarr:latest
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - TZ=${TZ}
+    volumes:
+      - ./radarr/:/config
+      - /mnt/8TBHDD/Movies:/movies
+      - /mnt/8TBHDD/Downloads:/downloads
+    networks:
+      - media
+    ports:
+      - 7878:7878
+    restart: unless-stopped
+
+  homarr:
+    container_name: homarr
+    image: ghcr.io/homarr-labs/homarr:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./homarr/appdata:/appdata
+    environment:
+      - SECRET_ENCRYPTION_KEY=${SECRET_ENCRYPTION_KEY}
+    networks:
+      - media
+    ports:
+      - 7575:7575
+    restart: unless-stopped
+     
+#  reverse-proxy:
+#   image: nginx
+#    container_name: reverse-proxy
+#    ports:
+#      - "8080:8080"
+#    volumes:
+#      - ./nginx:/etc/nginx
+#    restart: unless-stopped
+
+networks:
+  media:
+    driver: bridge

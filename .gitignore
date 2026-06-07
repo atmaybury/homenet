@@ -1,0 +1,8 @@
+.env
+
+homarr/
+radarr/
+sonarr/
+jellyfin/
+qbittorrent/
+nginx/
