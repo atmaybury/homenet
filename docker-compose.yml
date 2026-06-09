@@ -93,7 +93,6 @@ services:
       - 7878:7878
     restart: unless-stopped
 
-
   homarr:
     container_name: homarr
     image: ghcr.io/homarr-labs/homarr:latest
@@ -106,6 +105,29 @@ services:
       - media
     ports:
       - 7575:7575
+    restart: unless-stopped
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      # DNS Ports
+      - "53:53/tcp"
+      - "53:53/udp"
+      # Default HTTP Port
+      - "80:80/tcp"
+      # Default HTTPs Port. FTL will generate a self-signed certificate
+      - "443:443/tcp"
+    environment:
+      TZ: ${TZ}
+      # Set a password to access the web interface. Not setting one will result in a random password being assigned
+      FTLCONF_webserver_api_password: ${PIHOLE_ADMIN_PASSWORD}
+      FTLCONF_dns_listeningMode: 'ALL'
+    # Volumes store your data between container upgrades
+    volumes:
+      - './pihole:/etc/pihole'
+    cap_add:
+      - NET_ADMIN
     restart: unless-stopped
      
 #  reverse-proxy:
